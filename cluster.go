@@ -59,7 +59,7 @@ type ClusterOptions struct {
 
 	OnClose func() error
 
-	OnConnectionClose func(*pool.Conn) error
+	OnConnectionClose func() error
 
 	Username string
 	Password string

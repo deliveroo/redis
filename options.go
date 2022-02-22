@@ -46,7 +46,7 @@ type Options struct {
 	OnClose func() error
 
 	// Hook that is called when a connection is closed
-	OnConnectionClose func(*pool.Conn) error
+	OnConnectionClose func() error
 
 	// Use the specified Username to authenticate the current connection
 	// with one of the connections defined in the ACL list when connecting
@@ -424,7 +424,9 @@ func newConnPool(opt *Options) *pool.ConnPool {
 		Dialer: func(ctx context.Context) (net.Conn, error) {
 			return opt.Dialer(ctx, opt.Network, opt.Addr)
 		},
-		OnClose:            opt.OnConnectionClose,
+		OnClose: func(*pool.Conn) {
+			opt.OnConnectionClose()
+		},
 		PoolFIFO:           opt.PoolFIFO,
 		PoolSize:           opt.PoolSize,
 		MinIdleConns:       opt.MinIdleConns,
