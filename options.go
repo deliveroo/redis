@@ -424,8 +424,9 @@ func newConnPool(opt *Options) *pool.ConnPool {
 		Dialer: func(ctx context.Context) (net.Conn, error) {
 			return opt.Dialer(ctx, opt.Network, opt.Addr)
 		},
-		OnClose: func(*pool.Conn) {
+		OnClose: func(conn *pool.Conn) error {
 			opt.OnConnectionClose()
+			return nil
 		},
 		PoolFIFO:           opt.PoolFIFO,
 		PoolSize:           opt.PoolSize,
