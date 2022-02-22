@@ -59,6 +59,8 @@ type ClusterOptions struct {
 
 	OnClose func() error
 
+	OnConnectionClose func(*pool.Conn) error
+
 	Username string
 	Password string
 
@@ -140,9 +142,10 @@ func (opt *ClusterOptions) clientOptions() *Options {
 	const disableIdleCheck = -1
 
 	return &Options{
-		Dialer:    opt.Dialer,
-		OnConnect: opt.OnConnect,
-		OnClose:   opt.OnClose,
+		Dialer:            opt.Dialer,
+		OnConnect:         opt.OnConnect,
+		OnClose:           opt.OnClose,
+		OnConnectionClose: opt.OnConnectionClose,
 
 		Username: opt.Username,
 		Password: opt.Password,
