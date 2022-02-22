@@ -57,6 +57,10 @@ type ClusterOptions struct {
 
 	OnConnect func(ctx context.Context, cn *Conn) error
 
+	OnClose func() error
+
+	OnConnectionClose func(*pool.Conn) error
+
 	Username string
 	Password string
 
@@ -80,6 +84,9 @@ type ClusterOptions struct {
 	IdleCheckFrequency time.Duration
 
 	TLSConfig *tls.Config
+
+	// Hooks for telemetry
+	IncrLogHook func(name string, log string, err error)
 }
 
 func (opt *ClusterOptions) init() {
@@ -135,8 +142,10 @@ func (opt *ClusterOptions) clientOptions() *Options {
 	const disableIdleCheck = -1
 
 	return &Options{
-		Dialer:    opt.Dialer,
-		OnConnect: opt.OnConnect,
+		Dialer:            opt.Dialer,
+		OnConnect:         opt.OnConnect,
+		OnClose:           opt.OnClose,
+		OnConnectionClose: opt.OnConnectionClose,
 
 		Username: opt.Username,
 		Password: opt.Password,
@@ -777,7 +786,13 @@ func (c *ClusterClient) process(ctx context.Context, cmd Cmder) error {
 	var lastErr error
 	for attempt := 0; attempt <= c.opt.MaxRedirects; attempt++ {
 		if attempt > 0 {
+			if c.opt.IncrLogHook != nil {
+				c.opt.IncrLogHook("process.redirect_attempt", fmt.Sprintf("Process: Attempting a redirect. attempt=%d, slot=%d, cmd=%s", attempt, slot, cmd.Name()), lastErr)
+			}
 			if err := internal.Sleep(ctx, c.retryBackoff(attempt)); err != nil {
+				if c.opt.IncrLogHook != nil {
+					c.opt.IncrLogHook("process.redirect_attempt_error", fmt.Sprintf("Process: error while backing off. attempt=%d, slot=%d, cmd=%s", attempt, slot, cmd.Name()), lastErr)
+				}
 				return err
 			}
 		}
@@ -1103,7 +1118,13 @@ func (c *ClusterClient) _processPipeline(ctx context.Context, cmds []Cmder) erro
 
 	for attempt := 0; attempt <= c.opt.MaxRedirects; attempt++ {
 		if attempt > 0 {
+			if c.opt.IncrLogHook != nil {
+				c.opt.IncrLogHook("process_pipeline.redirect_attempt", fmt.Sprintf("ProcessPipeline: Attempting a redirect. attempt=%d, cmd_len=%d", attempt, len(cmds)), nil)
+			}
 			if err := internal.Sleep(ctx, c.retryBackoff(attempt)); err != nil {
+				if c.opt.IncrLogHook != nil {
+					c.opt.IncrLogHook("process_pipeline.redirect_attempt_failure", fmt.Sprintf("ProcessPipeline: error while backing off. attempt=%d, cmd_len=%d", attempt, len(cmds)), err)
+				}
 				setCmdsErr(cmds, err)
 				return err
 			}
@@ -1122,10 +1143,16 @@ func (c *ClusterClient) _processPipeline(ctx context.Context, cmds []Cmder) erro
 					return
 				}
 				if attempt < c.opt.MaxRedirects {
+					if c.opt.IncrLogHook != nil {
+						c.opt.IncrLogHook("process_pipeline.redirect_attempt_failure_node", fmt.Sprintf("ProcessPipeline: error while processing in a node. attempt=%d, cmd_length=%d, node=%s", attempt, len(cmds), node.String()), err)
+					}
 					if err := c.mapCmdsByNode(ctx, failedCmds, cmds); err != nil {
 						setCmdsErr(cmds, err)
 					}
 				} else {
+					if c.opt.IncrLogHook != nil {
+						c.opt.IncrLogHook("process_pipeline.redirect_attempt_exhausted_node", fmt.Sprintf("ProcessPipeline: No redirect attempts left. attempt=%d, cmd_length=%d, node=%s", attempt, len(cmds), node.String()), err)
+					}
 					setCmdsErr(cmds, err)
 				}
 			}(node, cmds)
