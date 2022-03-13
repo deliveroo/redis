@@ -46,7 +46,7 @@ type Options struct {
 	OnClose func() error
 
 	// Hook that is called when a connection is closed
-	OnConnectionClose func() error
+	OnConnectionClose func(addr string) error
 
 	// Use the specified Username to authenticate the current connection
 	// with one of the connections defined in the ACL list when connecting
@@ -426,7 +426,7 @@ func newConnPool(opt *Options) *pool.ConnPool {
 		},
 		OnClose: func(conn *pool.Conn) error {
 			if opt.OnConnectionClose != nil {
-				opt.OnConnectionClose()
+				opt.OnConnectionClose(conn.RemoteAddr().String())
 			}
 			return nil
 		},

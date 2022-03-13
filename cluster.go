@@ -59,7 +59,7 @@ type ClusterOptions struct {
 
 	OnClose func() error
 
-	OnConnectionClose func() error
+	OnConnectionClose func(addr string) error
 
 	Username string
 	Password string
