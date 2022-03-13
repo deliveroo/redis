@@ -153,6 +153,10 @@ func (c *baseClient) withTimeout(timeout time.Duration) *baseClient {
 	return clone
 }
 
+func (c *baseClient) PoolStats() *PoolStats {
+	return (*PoolStats)(c.connPool.Stats())
+}
+
 func (c *baseClient) String() string {
 	return fmt.Sprintf("Redis<%s db:%d>", c.getAddr(), c.opt.DB)
 }
