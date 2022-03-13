@@ -776,3 +776,7 @@ func (c *Conn) TxPipeline() Pipeliner {
 	pipe.init()
 	return &pipe
 }
+
+func (c *Conn) PoolStats() *pool.Stats {
+	return c.conn.connPool.Stats()
+}

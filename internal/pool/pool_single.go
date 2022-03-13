@@ -54,5 +54,5 @@ func (p *SingleConnPool) IdleLen() int {
 }
 
 func (p *SingleConnPool) Stats() *Stats {
-	return &Stats{}
+	return p.pool.Stats()
 }
