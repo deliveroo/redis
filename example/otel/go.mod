@@ -16,7 +16,7 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.26.1 // indirect
 	go.opentelemetry.io/otel v1.3.0
 	go.opentelemetry.io/proto/otlp v0.10.0 // indirect
-	golang.org/x/net v0.0.0-20211104170005-ce137452f963 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20211104193956-4c6863e31247 // indirect
 	google.golang.org/grpc v1.42.0 // indirect
 )
